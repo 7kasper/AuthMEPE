@@ -1,0 +1,157 @@
+buildscript {
+	dependencies {
+		classpath 'org.jdom:jdom2:2.0.6'
+		classpath 'org.ow2.asm:asm:5.1'
+		classpath 'org.ow2.asm:asm-commons:5.1'
+		classpath 'commons-io:commons-io:2.5'
+		classpath 'org.apache.ant:ant:1.9.7'
+		classpath 'org.codehaus.plexus:plexus-utils:3.0.24'
+		classpath 'org.vafer:jdependency:1.1'
+		classpath files('gradle/plugins/shadowPlugin.jar')
+	}
+	repositories {
+		mavenCentral()
+	}
+}
+
+plugins {
+	id 'java'
+}
+
+apply plugin: com.github.jengelman.gradle.plugins.shadow.ShadowPlugin
+
+tasks.withType(AbstractCompile) {
+	classpath += configurations.shadow
+}
+
+
+tasks.withType(JavaCompile) {
+	options.encoding = 'UTF-8'
+}
+
+group 'AuthMEPE'
+version '1.0'
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+
+
+import java.text.MessageFormat
+
+File dlDepsDirC = new File('dllibsc')
+dlDepsDirC.mkdirs()
+
+File dlDepsDirS = new File('dllibss')
+dlDepsDirS.mkdirs()
+
+//TODO: Add ProtocolSupportPocketStuff to dlLibsC (Obviously we're in beta and cannot download yet so compilation will have to be done for now)
+def dlDepsC = [
+	new Tuple(
+		'https://yivesmirror.com/files/spigot/spigot-api-1.12.2-R0.1-SNAPSHOT-shaded-b1631.jar',
+		'spigotAPI-1.12.2-1.jar'
+	),
+	new Tuple(
+		'https://ci.codemc.org/job/AuthMe/job/AuthMeReloaded/2062/artifact/target/AuthMe-5.5.0-SNAPSHOT.jar',
+		'AuthMe-5.5.0.jar'
+	),
+	new Tuple(
+		'Hah. You need to compile this yourself!',
+		'ProtocolSupportPocketStuff.jar'
+	)
+]
+
+def dlDepsS = [ ]
+
+void dlDeps(def dlDeps, File dlDepsDir) {
+	def dlDepsNames = new HashSet<String>()
+	dlDeps.each({
+		String dlDepUrl = it[0]
+		File dlDepFile = new File(dlDepsDir, it[1])
+		dlDepsNames.add(dlDepFile.getName())
+		if (!dlDepFile.exists()) {
+			if (dlDepFile.getName().equals("ProtocolSupportPocketStuff.jar")) {
+				throw new GradleException('You still need to compile ProtocolSupportPocketStuff and put it in dllibsc!')
+			} else {
+				logger.lifecycle(MessageFormat.format("Downloading {0} from {1}", dlDepFile.getName(), dlDepUrl))
+				ant.get(src: dlDepUrl, dest: dlDepFile)
+			}
+		} else {
+			logger.lifecycle(MessageFormat.format("Skipping download of {0} because it already exists", dlDepFile.getName()))
+		}
+	})
+	dlDepsDir.listFiles().findAll({ !dlDepsNames.contains(it.getName()) }).each({
+		logger.lifecycle(MessageFormat.format("Deleting old dllib {0}", it.getName()))
+		it.delete()
+	})
+}
+
+task updateLibs(type: DefaultTask) {doLast{
+	dlDeps(dlDepsC, dlDepsDirC)
+	dlDeps(dlDepsS, dlDepsDirS)
+}}
+
+
+sourceSets {
+	main {
+		java {
+			srcDirs = ['src']
+		}
+		resources {
+			srcDirs = ['resources']
+		}
+	}
+	test {
+		java {
+			srcDirs = ['tests']
+		}
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	shadow files('buildprocessor/BuildProcessor.jar')
+	shadow fileTree(dir: dlDepsDirC, include: '*.jar')
+	compile fileTree(dir: dlDepsDirS, include: '*.jar')
+	testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+
+File genDir = new File('gen')
+genDir.deleteDir()
+genDir.mkdirs()
+
+task copyFinalJarToTarget(type: Copy) {
+	// JitPack searches for the output jar at the standard Gradle output directory (jar.archivePath)
+	// By copying it from there to our target destination JitPack can archive it in a Maven repository
+	from jar.archivePath.getPath()
+	into 'target'
+
+	//remove version suffix
+	rename (jar.archiveName, jar.baseName + '.jar')
+}
+
+shadowJar {
+	doFirst {
+		new File(destinationDir, archiveName).delete()
+	}
+
+	from sourceSets.main.java.srcDirs
+	from 'LICENSE'
+	from genDir
+
+	//remove the -all suffix
+	archiveName = jar.archiveName
+	minimizeJar = true
+
+	exclude 'META-INF/**'
+}
+
+
+compileJava.dependsOn(clean)
+compileJava.dependsOn(updateLibs)
+compileJava.finalizedBy(test)
+jar.enabled = false
+jar.finalizedBy(shadowJar)
+shadowJar.finalizedBy(copyFinalJarToTarget)

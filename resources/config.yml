@@ -1,0 +1,27 @@
+# [Configuration for AuthMEPE]
+# = modals =
+# title         - The title of the modal
+# content       - The content of the modal
+# content-error - The content when the modal fails, but is executed again
+#                 (For instance when wrong password is entered on login)
+# close-error	- The content shown when the modal is closed without player input.
+#
+# !Do not change the config-version unless you know what you are doing!
+
+modals:
+ login:
+  title: Login
+  content: Please login using your authentication password.
+  content-error: Wrong password, please try again.
+  close-error: You need to login to play on this server!
+  password-text: Password
+ register:
+  title: Register
+  content: Please register with a new password to authenticate.
+  content-error: Something went wrong, perhaps your password is too short!
+  close-error: You need to register to play on this server!
+  password-text: Password
+  confirm-text: Confirm Password
+  confirm-error: Your passwords did not match, try again.
+  
+config-version: 1

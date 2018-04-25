@@ -1,0 +1,5 @@
+name: AuthMEPE
+main: authmepe.AuthMEPE
+depend: [ProtocolSupportPocketStuff, AuthMe]
+version: 0.1
+author: 7kasper

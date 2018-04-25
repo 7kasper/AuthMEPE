@@ -1,0 +1,35 @@
+# Build Folders #
+bin/
+build/
+libs/
+target/
+gen/
+dllibs/
+dllibss/
+dllibsc/
+
+.externalToolBuilders/
+ # Eclipse Files #
+*.project
+*.classpath
+*.prefs
+/.apt_generated/
+*.factorypath
+
+# Gradle
+.gradle
+.gradletasknamecache
+
+# Netbeans
+/.nb-gradle/
+
+# IntelliJ
+.idea/
+*.iml
+
+# jRebel
+*.rebel.xml.bak
+resources/rebel.xml
+
+#javadocs
+dox/
