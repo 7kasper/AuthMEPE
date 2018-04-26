@@ -4,7 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerLoginEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import fr.xephi.authme.api.v3.AuthMeApi;
@@ -28,6 +28,7 @@ public class AuthMEPE extends JavaPlugin implements Listener {
 	private ComplexForm notMatchRegisterModal;
 	private ModalCallback loginCallback;
 	private ModalCallback registerCallback;
+	private long modaldelay;
 
 	@Override
 	public void onEnable() {
@@ -36,6 +37,7 @@ public class AuthMEPE extends JavaPlugin implements Listener {
 		bakeModals();
 		auth = AuthMeApi.getInstance();
 		bakeCallbacks();
+		modaldelay = getConfig().getLong("modals.delay");
 		getServer().getPluginManager().registerEvents(this, this);
 	}
 
@@ -73,28 +75,29 @@ public class AuthMEPE extends JavaPlugin implements Listener {
 				PocketPlayer.sendModal(response.getPlayer(), closeLoginModal, loginCallback);
 			}
 		};
-		registerCallback = response -> {
-			if (!response.isCancelled()) {
-				ElementResponse password = response.asComplexFormResponse().getResponse(1);
-				ElementResponse confirm = response.asComplexFormResponse().getResponse(2);
-				if (password.getString().trim().equals(confirm.getString().trim())) {
-					if (auth.registerPlayer(response.getPlayer().getName(), password.getString().trim())) {
-						auth.forceLogin(response.getPlayer());
-					} else {
-						PocketPlayer.sendModal(response.getPlayer(), faultyRegisterModal, registerCallback);
-					}
-				} else {
-					PocketPlayer.sendModal(response.getPlayer(), notMatchRegisterModal, registerCallback);
-				}
-			} else {
-				PocketPlayer.sendModal(response.getPlayer(), closeRegisterModal, registerCallback);
-			}
-		};
+        registerCallback = response -> {
+            if (!response.isCancelled()) {
+                ElementResponse password = response.asComplexFormResponse().getResponse(1);
+                ElementResponse confirm = response.asComplexFormResponse().getResponse(2);
+                if (password.getString().trim().equals(confirm.getString().trim())) {
+                    if (password.getString().length() < 4 || password.getString().length() > 16) {
+                        PocketPlayer.sendModal(response.getPlayer(), faultyRegisterModal, registerCallback);
+                    } else {
+                        auth.forceRegister(response.getPlayer(), password.getString().trim());
+                        auth.forceLogin(response.getPlayer());
+                    }
+                } else {
+                    PocketPlayer.sendModal(response.getPlayer(), notMatchRegisterModal, registerCallback);
+                }
+            } else {
+                PocketPlayer.sendModal(response.getPlayer(), closeRegisterModal, registerCallback);
+            }
+        };
 	}
 
 	//Show login or register modal on login.
 	@EventHandler(priority = EventPriority.LOWEST)
-	public void onLogin(PlayerLoginEvent event) {
+	public void onLogin(PlayerJoinEvent event) {
 		//We need schedular currently for not so good internals that need to 'settle' such as movment confirm thingy. :rip:
 		Bukkit.getScheduler().runTaskLater(this, () -> {
 			if (PocketPlayer.isPocketPlayer(event.getPlayer()) && 
@@ -105,7 +108,7 @@ public class AuthMEPE extends JavaPlugin implements Listener {
 						PocketPlayer.sendModal(event.getPlayer(), registerModal, registerCallback);
 					}
 				}
-		}, 200l);
+		}, modaldelay);
 	}
 
 	//Show faultylogin modal on login failure.

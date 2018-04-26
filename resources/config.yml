@@ -1,14 +1,27 @@
 # [Configuration for AuthMEPE]
 # = modals =
+# delay         - The delay to show the modal to PE players. > 200 recommended
+#               (going to low might make it not show up for slower connections!)
+# > login
 # title         - The title of the modal
 # content       - The content of the modal
 # content-error - The content when the modal fails, but is executed again
 #                 (For instance when wrong password is entered on login)
 # close-error	- The content shown when the modal is closed without player input.
+# > register
+# title         - The title of the modal
+# content       - The content of the modal
+# content-error - The content when the modal fails, but is executed again
+#                 (For instance when too short password is given for authme)
+# close-error	- The content shown when the modal is closed without player input.
+# password-text - The placeholder text for password
+# confirm-text  - The placeholder text for confirmpassword.
+# confirm-error - The content shown when the modal is entered but the passwords didn't match.
 #
 # !Do not change the config-version unless you know what you are doing!
 
 modals:
+ delay: 300L
  login:
   title: Login
   content: Please login using your authentication password.
@@ -23,5 +36,4 @@ modals:
   password-text: Password
   confirm-text: Confirm Password
   confirm-error: Your passwords did not match, try again.
-  
-config-version: 1
+config-version: 2
