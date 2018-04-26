@@ -18,6 +18,10 @@
 # confirm-text  - The placeholder text for confirmpassword.
 # confirm-error - The content shown when the modal is entered but the passwords didn't match.
 #
+# = authme =
+# min-pass-len  - The minimum password length needed for auth.
+# max-pass-len  - The maximum password length needed for auth.
+#
 # !Do not change the config-version unless you know what you are doing!
 
 modals:
@@ -31,9 +35,12 @@ modals:
  register:
   title: Register
   content: Please register with a new password to authenticate.
-  content-error: Something went wrong, perhaps your password is too short!
+  content-error: Something went wrong, perhaps your password is too short or long!
   close-error: You need to register to play on this server!
   password-text: Password
   confirm-text: Confirm Password
   confirm-error: Your passwords did not match, try again.
-config-version: 2
+authme:
+ min-pass-len: 4
+ max-pass-len: 16
+config-version: 3

@@ -29,6 +29,8 @@ public class AuthMEPE extends JavaPlugin implements Listener {
 	private ModalCallback loginCallback;
 	private ModalCallback registerCallback;
 	private long modaldelay;
+	private int minPassLen;
+	private int maxPassLen;
 
 	@Override
 	public void onEnable() {
@@ -38,6 +40,8 @@ public class AuthMEPE extends JavaPlugin implements Listener {
 		auth = AuthMeApi.getInstance();
 		bakeCallbacks();
 		modaldelay = getConfig().getLong("modals.delay");
+		minPassLen = getConfig().getInt("authme.min-pass-len");
+		maxPassLen = getConfig().getInt("authme.max-pass-len");
 		getServer().getPluginManager().registerEvents(this, this);
 	}
 
@@ -80,7 +84,7 @@ public class AuthMEPE extends JavaPlugin implements Listener {
                 ElementResponse password = response.asComplexFormResponse().getResponse(1);
                 ElementResponse confirm = response.asComplexFormResponse().getResponse(2);
                 if (password.getString().trim().equals(confirm.getString().trim())) {
-                    if (password.getString().length() < 4 || password.getString().length() > 16) {
+                    if (password.getString().length() < minPassLen || password.getString().length() > maxPassLen) {
                         PocketPlayer.sendModal(response.getPlayer(), faultyRegisterModal, registerCallback);
                     } else {
                         auth.forceRegister(response.getPlayer(), password.getString().trim());
